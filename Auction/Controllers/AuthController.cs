@@ -122,6 +122,8 @@ namespace Auction.Controllers
                 }
                 ModelState.AddModelError("", "Имя пользователя уже занято!");
             }
+            register.Password = null!;
+            register.RepeatPassword = null!;
             ViewData["Title"] = "Регистрация";
             ViewData["Theme"] = GetCoockieValue(CoockieEnums.ThemeObject.Key);
             ViewBag.IsShowHeader = false;
@@ -153,6 +155,8 @@ namespace Auction.Controllers
                 }
                 ModelState.AddModelError("", "Некорректные логин и(или) пароль");
             }
+            login.Password = null!;
+            login.RememberMe = false;
             ViewData["Title"] = "Авторизация";
             ViewData["Theme"] = GetCoockieValue(CoockieEnums.ThemeObject.Key);
             ViewBag.IsShowHeader = false;
