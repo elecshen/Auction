@@ -1,22 +1,42 @@
-html {
-  font-size: 14px;
+/*html {
+  position: relative;
+}
+*/
+@media (min-width: 992px) {
+    .w-lg-auto {
+        width: auto;
+    }
 }
 
 @media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
+    .w-md-auto {
+        width: auto;
+    }
 }
 
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+@media (min-width: 576px) {
+    .w-sm-auto {
+        width: auto;
+    }
 }
 
-html {
-  position: relative;
-  min-height: 100%;
+.header-shadow {
+    box-shadow: var(--bs-secondary-bg) 0px 0px 16px;
 }
 
-body {
-  margin-bottom: 60px;
+/*Заменить на bg-primary для обоих тем, если будет белый вариант лого*/
+[data-bs-theme=dark] header nav {
+    --bs-bg-opacity: 1;
+    background-color: rgba(var(--bs-tertiary-bg-rgb),var(--bs-bg-opacity)) !important;
 }
+
+/*
+.bg-primary,
+.btn-primary,
+.badge-primary,
+.alert-primary {
+    background: #fccb90;
+    background: -webkit-linear-gradient(to right, #ee7724, #d8363a, #dd3675, #b44593);
+    background: linear-gradient(to right, #ee7724, #d8363a, #dd3675, #b44593);
+}
+*/

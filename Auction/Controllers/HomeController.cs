@@ -1,4 +1,5 @@
 using Auction.Models;
+using Auction.Models.ConstModels;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 
@@ -10,6 +11,7 @@ namespace Auction.Controllers
 
         public IActionResult Index()
         {
+            ViewData["Theme"] = CoockieKeys.Theme.Values[1];
             return View();
         }
 

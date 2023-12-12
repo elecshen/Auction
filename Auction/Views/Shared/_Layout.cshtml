@@ -1,44 +1,51 @@
-﻿<!DOCTYPE html>
-<html lang="en">
+﻿@{
+    ViewData["Brand"] = "Auctogist";
+    if (ViewBag.IsShowHeader is null)
+        ViewBag.IsShowHeader = true;
+    if (ViewBag.IsShowSearch is null)
+        ViewBag.IsShowSearch = false;
+}
+
+<!DOCTYPE html>
+<html lang="ru">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Auction</title>
+    <title>@ViewData["Title"]</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/Auction.styles.css" asp-append-version="true" />
 </head>
-<body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">Auction</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
-                    </ul>
+<body class="d-flex flex-column w-100 min-vh-100 bg-body" data-bs-theme="@ViewData["Theme"]">
+    @if(ViewBag.IsShowHeader)
+    {
+        <header class="flex-grow-0 header-shadow mb-2">
+            <nav class="navbar navbar-expand-sm border-bottom bg-body p-0">
+                <div class="container-fluid">
+                    <a class="navbar-brand p-0" asp-action="index">
+                        <img src="~/img/logo/logo-064.png" height="64" alt="logo" />
+                    </a>
+                    @if(ViewBag.IsShowSearch)
+                    {
+                        <form class="m-auto col-4" role="search">
+                            <div class="input-group input-group-lg">
+                                <input class="form-control" type="search" placeholder="Поиск" aria-label="Поиск">
+                                <button class="btn btn-outline-success" type="submit">Поиск</button>
+                            </div>
+                        </form>
+                    }
                 </div>
-            </div>
-        </nav>
-    </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
+            </nav>
+        </header>
+    }
+    <main role="main" class="container-fluid flex-grow-1 d-flex">
+        @RenderBody()
+    </main>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2023 - Auction - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+    <footer class="bg-body-tertiary text-center text-lg-start flex-grow-0">
+        <div class="text-center p-3">
+            &copy; 2023 Copyright:
+            <a asp-controller="Home" asp-action="Index">@ViewData["Brand"]</a>
         </div>
     </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>

@@ -23,7 +23,8 @@
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
-      }
+      },
+      "use64Bit": true
     },
     "Docker": {
       "commandName": "Docker",
@@ -34,7 +35,8 @@
         "ASPNETCORE_HTTP_PORTS": "8080"
       },
       "publishAllPorts": true,
-      "useSSL": true
+      "useSSL": true,
+      "DockerfileRunArguments": "-rm"
     }
   },
   "$schema": "http://json.schemastore.org/launchsettings.json",

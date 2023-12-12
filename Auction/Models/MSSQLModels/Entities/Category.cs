@@ -1,0 +1,13 @@
+﻿using System;
+using System.Collections.Generic;
+
+namespace Auction.Models.MSSQLModels.Entities;
+
+public partial class Category
+{
+    public int Id { get; set; }
+
+    public string Name { get; set; } = null!;
+
+    public virtual ICollection<Lot> Lots { get; set; } = new List<Lot>();
+}
