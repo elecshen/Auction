@@ -50,14 +50,15 @@ namespace Auction.Controllers
         {//Reset coockie
             string? v = null;
             bool valueExist = HttpContext.Request.Cookies.ContainsKey(key) && HttpContext.Request.Cookies.TryGetValue(key, out v) && v is not null;
-            switch (key)
+            if (key == CoockieEnums.ThemeObject.Key)
             {
-                case CoockieKeys.Theme.Key:
-                    if (valueExist && CoockieKeys.Theme.Values.Contains(v))
-                        return v;
-                    return SetCoockieValue(key, CoockieKeys.Theme.DefaultValue);
-                default: 
-                    return null;
+                if (valueExist && CoockieEnums.ThemeObject.Values.Contains(v!))
+                    return v;
+                return SetCoockieValue(key, CoockieEnums.ThemeObject.Default);
+            }
+            else
+            {
+                return null;
             }
         }
 
@@ -91,7 +92,7 @@ namespace Auction.Controllers
         public IActionResult Register()
         {
             ViewData["Title"] = "Регистрация";
-            ViewData["Theme"] = GetCoockieValue(CoockieKeys.Theme.Key);
+            ViewData["Theme"] = GetCoockieValue(CoockieEnums.ThemeObject.Key);
             ViewBag.IsShowHeader = false;
             return View();
         }
@@ -122,7 +123,7 @@ namespace Auction.Controllers
                 ModelState.AddModelError("", "Имя пользователя уже занято!");
             }
             ViewData["Title"] = "Регистрация";
-            ViewData["Theme"] = GetCoockieValue(CoockieKeys.Theme.Key);
+            ViewData["Theme"] = GetCoockieValue(CoockieEnums.ThemeObject.Key);
             ViewBag.IsShowHeader = false;
             return View(register);
         }
@@ -131,7 +132,7 @@ namespace Auction.Controllers
         public IActionResult Login()
         {
             ViewData["Title"] = "Авторизация";
-            ViewData["Theme"] = GetCoockieValue(CoockieKeys.Theme.Key);
+            ViewData["Theme"] = GetCoockieValue(CoockieEnums.ThemeObject.Key);
             ViewBag.IsShowHeader = false;
             return View();
         }
@@ -153,7 +154,7 @@ namespace Auction.Controllers
                 ModelState.AddModelError("", "Некорректные логин и(или) пароль");
             }
             ViewData["Title"] = "Авторизация";
-            ViewData["Theme"] = GetCoockieValue(CoockieKeys.Theme.Key);
+            ViewData["Theme"] = GetCoockieValue(CoockieEnums.ThemeObject.Key);
             ViewBag.IsShowHeader = false;
             return View(login);
         }

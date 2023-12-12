@@ -11,7 +11,7 @@ namespace Auction.Controllers
 
         public IActionResult Index()
         {
-            ViewData["Theme"] = CoockieKeys.Theme.Values[1];
+            ViewData["Theme"] = CoockieEnums.Theme.Light;
             return View();
         }
 
