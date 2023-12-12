@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using NuGet.Protocol.Plugins;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
@@ -91,9 +90,7 @@ namespace Auction.Controllers
         [HttpGet]
         public IActionResult Register()
         {
-            ViewData["Title"] = "Регистрация";
             ViewData["Theme"] = GetCoockieValue(CoockieEnums.ThemeObject.Key);
-            ViewBag.IsShowHeader = false;
             return View();
         }
 
@@ -124,18 +121,14 @@ namespace Auction.Controllers
             }
             register.Password = null!;
             register.RepeatPassword = null!;
-            ViewData["Title"] = "Регистрация";
             ViewData["Theme"] = GetCoockieValue(CoockieEnums.ThemeObject.Key);
-            ViewBag.IsShowHeader = false;
             return View(register);
         }
 
         [HttpGet]
         public IActionResult Login()
         {
-            ViewData["Title"] = "Авторизация";
             ViewData["Theme"] = GetCoockieValue(CoockieEnums.ThemeObject.Key);
-            ViewBag.IsShowHeader = false;
             return View();
         }
 
@@ -157,9 +150,7 @@ namespace Auction.Controllers
             }
             login.Password = null!;
             login.RememberMe = false;
-            ViewData["Title"] = "Авторизация";
             ViewData["Theme"] = GetCoockieValue(CoockieEnums.ThemeObject.Key);
-            ViewBag.IsShowHeader = false;
             return View(login);
         }
 
