@@ -1,4 +1,9 @@
-﻿// Please see documentation at https://learn.microsoft.com/aspnet/core/client-side/bundling-and-minification
-// for details on configuring this project to bundle and minify static web assets.
-
-// Write your JavaScript code.
+﻿// Блокировка отправки пустого поиска
+$(function () {
+    $("#search-form").on("submit", function (event) {
+        // Проверяем, если поле ввода пустое
+        if ($("#search").val().trim() === "") {
+            event.preventDefault();
+        }
+    });
+});

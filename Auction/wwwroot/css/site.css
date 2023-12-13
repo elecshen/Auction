@@ -30,6 +30,30 @@
     background-color: rgba(var(--bs-tertiary-bg-rgb),var(--bs-bg-opacity)) !important;
 }
 
+.filter-container-h {
+    position: absolute;
+    top: 100%;
+    left:0;
+    right:0;
+    height: 100px;
+}
+
+    .filter-container-h .card {
+        width:fit-content;
+    }
+
+#search-form button.btn-outline-info {
+    --bs-btn-bg: var(--bs-tertiary-bg);
+}
+
+#search-form input {
+    --bs-body-bg: var(--bs-tertiary-bg);
+}
+
+[data-bs-theme=dark] #search-form button.btn-outline-info {
+    --bs-btn-bg: var(--bs-body-bg);
+}
+
 /*
 .bg-primary,
 .btn-primary,
