@@ -1,6 +1,4 @@
-﻿using System.Reflection;
-
-namespace Auction.Models.ConstModels
+﻿namespace Auction.Models.ConstModels
 {
     public static class CoockieEnums
     {
