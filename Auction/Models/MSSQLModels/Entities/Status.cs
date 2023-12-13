@@ -9,5 +9,7 @@ public partial class Status
 
     public string Name { get; set; } = null!;
 
+    public bool SetDefault { get; set; }
+
     public virtual ICollection<Lot> Lots { get; set; } = new List<Lot>();
 }
