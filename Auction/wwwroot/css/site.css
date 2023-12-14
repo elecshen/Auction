@@ -50,10 +50,6 @@
     --bs-body-bg: var(--bs-tertiary-bg);
 }
 
-[data-bs-theme=dark] #search-form button.btn-outline-info {
-    --bs-btn-bg: var(--bs-body-bg);
-}
-
 /*
 .bg-primary,
 .btn-primary,
