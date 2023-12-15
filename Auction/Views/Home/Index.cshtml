@@ -43,7 +43,7 @@
             @foreach (SelectListItem categoryItem in ViewBag.CategoryFilterList.List)
             {
                 <div class="col flex-grow-1 gx-xxl-5 gx-xl-4 gx-sm-5 gy-2 text-nowrap category-selector">
-                    <input type="radio" form="@ViewBag.FormId" class="btn-check" name="@ViewBag.CategoryFilterList.ParamName" id="@ViewBag.CategoryFilterList.ParamName-@categoryItem.Value" value="@categoryItem.Value" checked="@categoryItem.Selected" autocomplete="off">
+                    <input type="checkbox" form="@ViewBag.FormId" class="btn-check" name="@ViewBag.CategoryFilterList.ParamName" id="@ViewBag.CategoryFilterList.ParamName-@categoryItem.Value" value="@categoryItem.Value" checked="@categoryItem.Selected" autocomplete="off">
                     <label class="btn btn-outline-primary rounded-5 d-block text-truncate" for="@ViewBag.CategoryFilterList.ParamName-@categoryItem.Value">@categoryItem.Text</label>
                 </div>
             }

@@ -15,7 +15,7 @@ namespace Auction.Controllers
         private readonly ILogger<HomeController> _logger = logger;
         private readonly LocalDBContext _context = context;
 
-        public IActionResult Index(string? search, int[] statusFilter, int? categoryFilter)
+        public IActionResult Index(string? search, int[] statusFilter, int[] categoryFilter)
         {
             // Подготавливаем запрос на выборку данных о лотах
             var filtredLots = _context.Lots.Select(l => new LotCardVM()
@@ -43,7 +43,6 @@ namespace Auction.Controllers
                 if (!isDefault)
                     s.SetDefault = statusFilter.Contains(s.Id);
             });
-            string[] statusesName = statuses.Where(s => s.SetDefault).Select(s => s.Name).ToArray();
             ViewBag.StatusFilterList = new
             {
                 ParamName = "StatusFilter",
@@ -51,21 +50,21 @@ namespace Auction.Controllers
             };
             if (!(statusFilter.Length == 0 || statusFilter.Length == statuses.Count))
             {
+                string[] statusesName = statuses.Where(s => s.SetDefault).Select(s => s.Name).ToArray();
                 filtredLots = filtredLots.Where(l => statusesName.Contains(l.StatusName));
             }
             // Получение списка категорий и фильтрация по выбранной
-            categoryFilter ??= -1;
             List<Category> categories = _context.Categories.ToList();
-            string? selectedCategory = categories.FirstOrDefault(c => c.Id == categoryFilter)?.Name;
-            categories.Insert(0, new() { Id = -1, Name = "Все" });
+            var categoriesSelectList = categories.Select(c => new SelectListItem(c.Name, c.Id.ToString(), categoryFilter.Contains(c.Id)));
             ViewBag.CategoryFilterList = new
             {
                 ParamName = "CategoryFilter",
-                List = categories.Select(c => new SelectListItem(c.Name, c.Id.ToString(), c.Id == categoryFilter)),
+                List = categoriesSelectList,
             };
-            if (selectedCategory is not null)
+            if (!(categoryFilter.Length == 0 || categoryFilter.Length == categories.Count))
             {
-                filtredLots = filtredLots.Where(l => l.CategoryName == selectedCategory);
+                var categoriesNames = categoriesSelectList.Where(cs => cs.Selected).Select(cs => cs.Text);
+                filtredLots = filtredLots.Where(l => categoriesNames.Contains(l.CategoryName));
             }
 
             ViewData["Theme"] = Theme.Dark;
