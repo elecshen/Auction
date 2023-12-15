@@ -67,7 +67,7 @@ namespace Auction.Controllers
                 filtredLots = filtredLots.Where(l => categoriesNames.Contains(l.CategoryName));
             }
 
-            ViewData["Theme"] = Theme.Dark;
+            ViewData["Theme"] = Theme.Light;
 
             // Исполняем запрос со всеми применёнными фильтрациями и передаём его как модель
             return View(filtredLots.ToList());

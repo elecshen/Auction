@@ -50,6 +50,11 @@
     --bs-body-bg: var(--bs-tertiary-bg);
 }
 
+input[type="search"]:focus {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
 /*
 .bg-primary,
 .btn-primary,
