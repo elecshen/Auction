@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace Auction.Models.MSSQLModels.Entities;
+﻿namespace Auction.Models.MSSQLModels.Entities;
 
 public partial class Lot
 {

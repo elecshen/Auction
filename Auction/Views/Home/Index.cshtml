@@ -1,4 +1,5 @@
-﻿@{
+﻿@model List<Auction.Models.Home.LotCardVM>
+@{
     ViewData["Title"] = "Home Page";
     ViewBag.FormId = "search-form";
 }
@@ -14,7 +15,7 @@
         </form>
         <div class="filter-container-h mx-auto pe-none">
             <div class="collapse py-1 pe-auto">
-                <div class="card m-auto">
+                <div class="card m-auto z-3">
                     <div class="card-header">Дополнительные фильтры</div>
                     <div class="row g-0">
                         <div class="col">
@@ -37,15 +38,82 @@
 }
 
 <section class="container-fluid mb-3">
-    <div class="container m-auto" style="height:100px">
+    <div class="container m-auto">
         <div class="row justify-content-center">
             @foreach (SelectListItem categoryItem in ViewBag.CategoryFilterList.List)
             {
-                <div class="col flex-grow-1 gx-xxl-5 gx-xl-4 gx-sm-5 gy-2 text-nowrap">
+                <div class="col flex-grow-1 gx-xxl-5 gx-xl-4 gx-sm-5 gy-2 text-nowrap category-selector">
                     <input type="radio" form="@ViewBag.FormId" class="btn-check" name="@ViewBag.CategoryFilterList.ParamName" id="@ViewBag.CategoryFilterList.ParamName-@categoryItem.Value" value="@categoryItem.Value" checked="@categoryItem.Selected" autocomplete="off">
                     <label class="btn btn-outline-primary rounded-5 d-block text-truncate" for="@ViewBag.CategoryFilterList.ParamName-@categoryItem.Value">@categoryItem.Text</label>
                 </div>
             }
+        </div>
+    </div>
+</section>
+<section class="container-fluid">
+    <div class="container m-auto">
+        <div class="row row-cols-xl-3 row-cols-md-2 row-cols-1 justify-content-between">
+            @{ int lotCounter = 0;}
+            @foreach(var lot in Model)
+            {
+                lotCounter++;
+                <div class="col d-flex justify-content-center p-3">
+                    <div class="card overflow-hidden rounded-4" style="width: 360px; height: 460px">
+                        <div id="carousel-@lotCounter" class="carousel slide carousel-fade card-img-top h-50">
+                            <div class="carousel-indicators">
+                                @for (int i = 0; i < 3; i++)
+                                {
+                                    <button type="button" data-bs-target="#carousel-@lotCounter" data-bs-slide-to="@i" @(i == 0 ? "class=active aria-current=true" : "") aria-label="Slide @i"></button>
+                                }
+                            </div>
+                            <div class="carousel-inner h-100 overflow-hidden">
+                                @for (int i = 0; i < 3; i++)
+                                {
+                                    <div class="carousel-item h-100 @(i == 0 ? "active" : "")">
+                                        <img src="~/img/logo/img_placeholder.png" class="bg-body-secondary d-block w-100 h-100 object-fit-cover" />
+                                    </div>
+                                }
+                            </div>
+                            <button class="carousel-control-prev" type="button" data-bs-target="#carousel-@lotCounter" data-bs-slide="prev">
+                                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                <span class="visually-hidden">Предыдущий</span>
+                            </button>
+                            <button class="carousel-control-next" type="button" data-bs-target="#carousel-@lotCounter" data-bs-slide="next">
+                                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                <span class="visually-hidden">Следующий</span>
+                            </button>
+                        </div>
+                        <div class="card-body pb-0 d-inline-flex flex-column">
+                            <div class="container-fluid p-0 d-flex flex-nowrap">
+                                <div class="col-6 d-flex flex-column">
+                                    <small>Текущая цена</small>
+                                    <b>@(lot.LastBid is not null ? lot.LastBid.Value : lot.StartPrice)</b>
+                                </div>
+                                <div class="col-6 d-flex flex-column text-end">
+                                    <small>Цена выкупа</small>
+                                    <b>@lot.BlitzPrice</b>
+                                </div>
+                            </div>
+                            <div class="card-title my-2 flex-grow-1 h5 text-nowrap text-truncate" style="max-height: 3rem">@lot.Title</div>
+                            <div class="container-fluid p-0 d-flex justify-content-between align-items-center flex-nowrap">
+                                <div class="col">Cтатус</div>
+                                <div class="col text-end">@lot.StatusName</div>
+                            </div>
+                            <div class="container-fluid p-0 progress" role="progressbar" data-start-time="@lot.StartDate.ToString("O")" data-end-time="@lot.ExpiresOn.ToString("O")">
+                                <div class="progress-bar"></div>
+                            </div>
+                            <div class="container-fluid p-0 d-flex justify-content-between align-items-center flex-nowrap" style="font-size: 0.7rem">
+                                <div class="col">@lot.StartDate.ToString("g")</div>
+                                <div class="col text-end">@lot.ExpiresOn.ToString("g")</div>
+                            </div>
+                            <div class="d-inline-block py-2">
+                                <small class="text-body-secondary">@lot.CategoryName</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+            <div class="col"></div>
         </div>
     </div>
 </section>
