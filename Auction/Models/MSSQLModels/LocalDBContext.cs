@@ -140,6 +140,7 @@ public partial class LocalDBContext : DbContext
             entity.Property(e => e.ExpiresOn).HasColumnType("datetime");
             entity.Property(e => e.LastBidId).HasColumnName("LastBidID");
             entity.Property(e => e.OwnerId).HasColumnName("OwnerID");
+            entity.Property(e => e.PublicId).ValueGeneratedOnAdd();
             entity.Property(e => e.StartDate).HasColumnType("datetime");
             entity.Property(e => e.StatusId).HasColumnName("StatusID");
             entity.Property(e => e.Title).HasMaxLength(128);

@@ -4,6 +4,7 @@ namespace Auction.Models.Home
 {
     public class LotCardVM
     {
+        public long PublicId { get; set; }
         public int StartPrice { get; set; }
         public Bid? LastBid { get; set; }
         public int BlitzPrice { get; set; }

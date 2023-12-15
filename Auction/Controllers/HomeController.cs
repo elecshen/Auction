@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
+using System.Security.Cryptography;
 using static Auction.Models.ConstModels.CoockieEnums;
 
 namespace Auction.Controllers
@@ -20,6 +21,7 @@ namespace Auction.Controllers
             // Подготавливаем запрос на выборку данных о лотах
             var filtredLots = _context.Lots.Select(l => new LotCardVM()
             {
+                PublicId = l.PublicId,
                 StartPrice = l.StartPrice,
                 LastBid = l.LastBid,
                 BlitzPrice = l.BlitzPrice,
@@ -41,16 +43,16 @@ namespace Auction.Controllers
             statuses.ForEach(s =>
             {
                 if (!isDefault)
-                    s.SetDefault = statusFilter.Contains(s.Id);
+                    s.IsSetByDefault = statusFilter.Contains(s.Id);
             });
             ViewBag.StatusFilterList = new
             {
                 ParamName = "StatusFilter",
-                List = statuses.Select(s => new SelectListItem(s.Name, s.Id.ToString(), s.SetDefault)),
+                List = statuses.Select(s => new SelectListItem(s.Name, s.Id.ToString(), s.IsSetByDefault)),
             };
             if (!(statusFilter.Length == 0 || statusFilter.Length == statuses.Count))
             {
-                string[] statusesName = statuses.Where(s => s.SetDefault).Select(s => s.Name).ToArray();
+                string[] statusesName = statuses.Where(s => s.IsSetByDefault).Select(s => s.Name).ToArray();
                 filtredLots = filtredLots.Where(l => statusesName.Contains(l.StatusName));
             }
             // Получение списка категорий и фильтрация по выбранной
