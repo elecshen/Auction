@@ -2,8 +2,8 @@
   position: relative;
 }
 */
-@media (min-width: 992px) {
-    .w-lg-auto {
+@media (min-width: 576px) {
+    .w-sm-auto {
         width: auto;
     }
 }
@@ -14,8 +14,8 @@
     }
 }
 
-@media (min-width: 576px) {
-    .w-sm-auto {
+@media (min-width: 992px) {
+    .w-lg-auto {
         width: auto;
     }
 }
@@ -53,6 +53,24 @@
 input[type="search"]:focus {
     outline: none !important;
     box-shadow: none !important;
+}
+
+@media (min-width: 576px) {
+    .search-bar {
+        width: 250px;
+    }
+}
+
+@media (min-width: 768px) {
+    .search-bar {
+        width: 540px;
+    }
+}
+
+@media (min-width: 992px) {
+    .search-bar {
+        width: 650px;
+    }
 }
 
 /*
