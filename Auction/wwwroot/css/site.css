@@ -2,6 +2,19 @@
   position: relative;
 }
 */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background-color: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    border-radius: 10px;
+    background-color: #819dc6b3;
+}
+
 @media (min-width: 576px) {
     .w-sm-auto {
         width: auto;
@@ -24,7 +37,6 @@
     box-shadow: var(--bs-secondary-bg) 0px 0px 16px;
 }
 
-/*Заменить на bg-primary для обоих тем, если будет белый вариант лого*/
 [data-bs-theme=dark] header nav {
     --bs-bg-opacity: 1;
     background-color: rgba(var(--bs-tertiary-bg-rgb),var(--bs-bg-opacity)) !important;
@@ -73,6 +85,10 @@ input[type="search"]:focus {
     }
 }
 
+.navbar-auth-pill {
+    width: 80px;
+    height: 48px;
+}
 /*
 .bg-primary,
 .btn-primary,
