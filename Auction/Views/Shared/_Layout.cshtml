@@ -28,7 +28,7 @@
                     @if (User.Identity.IsAuthenticated)
                     {
                         <div class="flex-grow-0 dropdown">
-                            <button class="navbar-auth-pill btn @(User.IsInRole("admin") ? "btn-outline-danger" : "btn-outline-primary") dropdown-toggle d-flex justify-content-around align-items-center" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <button class="navbar-auth-pill btn @(User.IsInRole("Admin") ? "btn-outline-danger" : "btn-outline-primary") dropdown-toggle d-flex justify-content-around align-items-center" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="bi bi-person-circle fs-2"></i>
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end">

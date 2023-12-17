@@ -67,19 +67,18 @@ input[type="search"]:focus {
     box-shadow: none !important;
 }
 
-@media (min-width: 576px) {
-    .search-bar {
-        width: 250px;
-    }
+
+.search-bar {
+    width: 540px;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 1070px) {
     .search-bar {
         width: 540px;
     }
 }
 
-@media (min-width: 992px) {
+@media (min-width: 1200px) {
     .search-bar {
         width: 650px;
     }
