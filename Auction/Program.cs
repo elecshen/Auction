@@ -37,10 +37,10 @@ namespace Auction
             app.UseAuthentication();
             app.UseAuthorization();
 
+            app.MapControllerRoute("search", "", new {controller = "Home", action = "Index"});
+            app.MapControllerRoute("getlot", "lot", new { controller = "Lot", action = "Index" });
+            app.MapControllerRoute("managelot", "lot/{action}", new { controller = "Lot" });
             app.MapGroup("auth/").MapControllerRoute("auth", "{action}", new { controller = "Auth" });
-            app.MapControllerRoute(
-                name: "default",
-                pattern: "{controller=Home}/{action=Index}/{id?}");
 
             app.Run();
         }
