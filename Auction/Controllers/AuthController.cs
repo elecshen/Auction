@@ -154,5 +154,10 @@ namespace Auction.Controllers
             return View(login);
         }
 
+        public async Task<IActionResult> LogoutAsync()
+        {
+            await HttpContext.SignOutAsync();
+            return RedirectToAction("Index", "Home");
+        }
     }
 }
