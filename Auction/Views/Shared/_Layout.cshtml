@@ -2,8 +2,6 @@
     ViewData["Brand"] = "Auctogist";
     if (ViewBag.IsShowHeader is null)
         ViewBag.IsShowHeader = true;
-    if (ViewBag.IsAuth is null)
-        ViewBag.IsAuth = false;
 }
 
 <!DOCTYPE html>
@@ -27,16 +25,26 @@
                         <img src="~/img/logo/logo-064.png" height="64" alt="logo" />
                     </a>
                     @await RenderSectionAsync("HeaderSearch", required: false)
-                    <div class="flex-grow-0 dropdown">
-                        <button class="navbar-auth-pill btn btn-outline-primary dropdown-toggle d-flex justify-content-around align-items-center" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="bi bi-person-circle fs-2"></i>
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a href="~/Lots/Create" class="dropdown-item">Создать лот</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a href="~/auth/logout" class="dropdown-item">Выйти</a></li>
-                        </ul>
-                    </div>
+                    @if (User.Identity.IsAuthenticated)
+                    {
+                        <div class="flex-grow-0 dropdown">
+                            <button class="navbar-auth-pill btn @(User.IsInRole("admin") ? "btn-outline-danger" : "btn-outline-primary") dropdown-toggle d-flex justify-content-around align-items-center" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-person-circle fs-2"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a href="~/Lots/Create" class="dropdown-item">Создать лот</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a href="~/auth/logout" class="dropdown-item">Выйти</a></li>
+                            </ul>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="flex-grow-0 d-flex">
+                            <a href="~/auth/login" class="btn btn-outline-primary me-2">Войти</a>
+                            <a href="~/auth/register" class="btn btn-primary">Присоединиться</a>
+                        </div>
+                    }
                 </div>
             </nav>
         </header>
