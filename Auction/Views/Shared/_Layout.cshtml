@@ -21,7 +21,7 @@
         <header class="flex-grow-0 header-shadow mb-2">
             <nav class="navbar navbar-expand-sm border-bottom bg-body p-0">
                 <div class="container-fluid">
-                    <a class="navbar-brand p-0" asp-action="index">
+                    <a class="navbar-brand p-0" asp-controller="home" asp-action="index">
                         <img src="~/img/logo/logo-064.png" height="64" alt="logo" />
                     </a>
                     @await RenderSectionAsync("HeaderSearch", required: false)
