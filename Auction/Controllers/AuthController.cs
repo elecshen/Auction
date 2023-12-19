@@ -114,6 +114,7 @@ namespace Auction.Controllers
                     };
                     _context.Add(user);
                     await _context.SaveChangesAsync();
+                    _context.Roles.ToList();
                     await AuthorizeAsync(user, false, returnUrl);
                     return Redirect(returnUrl ?? "/");
                 }
