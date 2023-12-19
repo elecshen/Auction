@@ -19,24 +19,13 @@ namespace Auction.Controllers
         public IActionResult Index(string? search, int[] statusFilter, int[] categoryFilter)
         {
             // Подготавливаем запрос на выборку данных о лотах
-            var filtredLots = _context.Lots.Select(l => new LotCardVM()
-            {
-                PublicId = l.PublicId,
-                StartPrice = l.StartPrice,
-                LastBid = l.LastBid,
-                BlitzPrice = l.BlitzPrice,
-                Title = l.Title,
-                StatusName = l.Status.Name,
-                StartDate = l.StartDate,
-                ExpiresOn = l.ExpiresOn,
-                CategoryName = l.Category.Name,
-            });
+            IQueryable<Lot> lotsFilter = _context.Lots.AsQueryable();
             // Получаем поисковую строку и фильтруем по ней
             ViewBag.Search = search;
             bool isDefault = search is null;
             if (!isDefault)
             {
-                filtredLots = filtredLots.Where(l => EF.Functions.Like(l.Title, string.Format("%{0}%", search!)));
+                lotsFilter = lotsFilter.Where(l => EF.Functions.Like(l.Title, string.Format("%{0}%", search!)));
             }
             // Получение списка статусов и фильтрация по выбранным
             List<Status> statuses = _context.Statuses.ToList();
@@ -50,10 +39,10 @@ namespace Auction.Controllers
                 ParamName = "StatusFilter",
                 List = statuses.Select(s => new SelectListItem(s.Name, s.Id.ToString(), s.IsSetByDefault)),
             };
-            if (!(statusFilter.Length == 0 || statusFilter.Length == statuses.Count))
+            if (!(statusFilter.Length == 0 || statusFilter.Length == statuses.Count) || isDefault)
             {
-                string[] statusesName = statuses.Where(s => s.IsSetByDefault).Select(s => s.Name).ToArray();
-                filtredLots = filtredLots.Where(l => statusesName.Contains(l.StatusName));
+                var activeStatuses = statuses.Where(s => s.IsSetByDefault).Select(s => s.Id).ToArray();
+                lotsFilter = lotsFilter.Where(l => activeStatuses.Contains(l.StatusId));
             }
             // Получение списка категорий и фильтрация по выбранной
             List<Category> categories = _context.Categories.ToList();
@@ -65,9 +54,22 @@ namespace Auction.Controllers
             };
             if (!(categoryFilter.Length == 0 || categoryFilter.Length == categories.Count))
             {
-                var categoriesNames = categoriesSelectList.Where(cs => cs.Selected).Select(cs => cs.Text);
-                filtredLots = filtredLots.Where(l => categoriesNames.Contains(l.CategoryName));
+                var activeCategories = categories.Where(c => categoryFilter.Contains(c.Id)).Select(c => c.Id);
+                lotsFilter = lotsFilter.Where(l => activeCategories.Contains(l.CategoryId));
             }
+
+            var filtredLots = lotsFilter.Select(l => new LotCardVM()
+            {
+                PublicId = l.PublicId,
+                StartPrice = l.StartPrice,
+                LastBid = l.LastBid,
+                BlitzPrice = l.BlitzPrice,
+                Title = l.Title,
+                StatusName = l.Status.Name,
+                StartDate = l.StartDate,
+                ExpiresOn = l.ExpiresOn,
+                CategoryName = l.Category.Name,
+            }).OrderBy(l => l.StartDate);
 
             ViewData["Theme"] = Theme.Light;
 
