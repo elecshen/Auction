@@ -75,14 +75,18 @@ namespace Auction.Controllers
                 ClaimTypes.Name,
                 ClaimTypes.Role
             );
-            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(id), new()
+            AuthenticationProperties properties = new()
             {
                 AllowRefresh = true,
                 RedirectUri = returnUrl,
-                ExpiresUtc = DateTime.UtcNow.AddMinutes(1),
                 IssuedUtc = DateTime.UtcNow,
                 IsPersistent = RememberMe,
-            });
+            };
+            if(RememberMe)
+            {
+                properties.ExpiresUtc = DateTime.UtcNow.AddMinutes(1);
+            }
+            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(id), properties);
         }
 
 
