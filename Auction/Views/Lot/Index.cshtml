@@ -9,10 +9,7 @@
     <section class="container-fluid">
         <div class="container d-flex justify-content-end">
             <a class="btn btn-warning m-2" asp-controller="lot" asp-action="edit" asp-route-pid="@Context.Request.Query["pid"].ToString()"><i class="bi bi-pencil-fill me-1"></i>Редактировать</a>
-            @if (User.IsInRole("Admin"))
-            {
-                <a class="btn btn-danger m-2" asp-controller="lot" asp-action="delete" asp-route-pid="@Context.Request.Query["pid"].ToString()"><i class="bi bi-trash3-fill me-1"></i>Удалить</a>
-            }
+            <a class="btn btn-danger m-2" asp-controller="lot" asp-action="delete" asp-route-pid="@Context.Request.Query["pid"].ToString()"><i class="bi bi-trash3-fill me-1"></i>Удалить</a>
         </div>
     </section>
 }
