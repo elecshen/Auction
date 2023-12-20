@@ -1,7 +1,7 @@
 ﻿@using Auction.Models.Lots
 @model LotVM
 @{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = Model.Title;
 }
 
 @if (ViewBag.IsOwner || User.IsInRole("Admin"))
