@@ -29,6 +29,8 @@ public partial class Lot
 
     public int StatusId { get; set; }
 
+    public bool IsClosed { get; set; }
+
     public int CategoryId { get; set; }
 
     public virtual ICollection<Bid> Bids { get; set; } = new List<Bid>();

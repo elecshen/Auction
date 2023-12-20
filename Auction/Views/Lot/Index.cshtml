@@ -1,0 +1,161 @@
+﻿@using Auction.Models.Lots
+@model LotVM
+@{
+    ViewData["Title"] = "Home Page";
+}
+
+@if (ViewBag.IsOwner || User.IsInRole("Admin"))
+{
+    <section class="container-fluid">
+        <div class="container d-flex justify-content-end">
+            <a class="btn btn-warning m-2" asp-controller="lot" asp-action="edit" asp-route-pid="@Context.Request.Query["pid"].ToString()"><i class="bi bi-pencil-fill me-1"></i>Редактировать</a>
+            @if (User.IsInRole("Admin"))
+            {
+                <a class="btn btn-danger m-2" asp-controller="lot" asp-action="delete" asp-route-pid="@Context.Request.Query["pid"].ToString()"><i class="bi bi-trash3-fill me-1"></i>Удалить</a>
+            }
+        </div>
+    </section>
+}
+
+<section class="container-fluid">
+    <div class="container m-auto">
+        <div class="d-flex flex-column">
+            <div class="row g-0 flex-sm-nowrap">
+                <div class="col card m-2">
+                    <div id="carousel" class="carousel slide card-img">
+                        <div class="carousel-indicators">
+                            @for (int i = 0; i < 3; i++)
+                            {
+                                <button type="button" data-bs-target="#carousel" data-bs-slide-to="@i" @(i == 0 ? "class=active aria-current=true" : "") aria-label="Slide @i"></button>
+                            }
+                        </div>
+                        <div class="carousel-inner h-100 overflow-hidden">
+                            @for (int i = 0; i < 3; i++)
+                            {
+                                <div class="carousel-item h-100 @(i == 0 ? "active" : "")">
+                                    <img src="~/img/logo/img_placeholder.png" class="bg-body-secondary d-block w-100 h-100 object-fit-cover" />
+                                </div>
+                            }
+                        </div>
+                        <button class="carousel-control-prev" type="button" data-bs-target="#carousel" data-bs-slide="prev">
+                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Предыдущий</span>
+                        </button>
+                        <button class="carousel-control-next" type="button" data-bs-target="#carousel" data-bs-slide="next">
+                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Следующий</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="col card m-2">
+                    <div class="card-body d-inline-flex flex-column">
+                        <div class="container-fluid p-0 d-flex">
+                            <p class="bg-primary flex-grow-0 mb-0 py-0 px-3 rounded-5 d-block text-truncate text-light">@Model.CategoryName</p>
+                        </div>
+                        <div class="card-title h2 mb-2">@Model.Title</div>
+                        
+                        <div class="container-fluid mb-2 fs-5 p-0 d-flex flex-nowrap">
+                            <div class="col-6 d-flex flex-column">
+                                <small>Текущая цена</small>
+                                <b>@(Model.LastBid is not null ? Model.LastBid.Value : Model.StartPrice)</b>
+                            </div>
+                            <div class="col-6 d-flex flex-column text-end">
+                                <small>Цена выкупа</small>
+                                <b>@Model.BlitzPrice</b>
+                            </div>
+                        </div>
+                        <div class="container-fluid p-0 mb-3">
+                            <div class="container-fluid p-0 d-flex justify-content-between align-items-center flex-nowrap">
+                                <div class="col">Cтатус</div>
+                                <div class="col text-end">@Model.StatusName</div>
+                            </div>
+                            <div class="container-fluid p-0 progress" role="progressbar" data-start-time="@Model.StartDate.ToString("O")" data-end-time="@Model.ExpiresOn.ToString("O")">
+                                <div class="progress-bar"></div>
+                            </div>
+                            <div class="container-fluid p-0 d-flex justify-content-between align-items-center flex-nowrap" style="font-size: 0.7rem">
+                                <div class="col">@Model.StartDate.ToString("g")</div>
+                                <div class="col text-end">@Model.ExpiresOn.ToString("g")</div>
+                            </div>
+                        </div>
+                        @if(!Model.IsClosed && !ViewBag.IsOwner)
+                        {
+                            if (User.Identity is not null && User.Identity.IsAuthenticated)
+                            {
+                                <div class="container-fluid p-0 mb-3">
+                                    <form class="d-flex" id="bid-form" method="post">
+                                        <input name="bid" min="@(Model.LastBid is not null ? Model.LastBid.Value + Model.PriceStep : Model.StartPrice)" step="@Model.PriceStep" max="@Model.BlitzPrice" id="bid" type="number" class="form-control me-5 @(string.IsNullOrEmpty(ViewBag.AddBidError) ? "" : "border-danger")" placeholder="Укажите ставку" />
+                                        <button class="btn btn-primary text-nowrap" type="submit">Сделать ставку</button>
+                                    </form>
+                                    <div class="text-danger @(string.IsNullOrEmpty(ViewBag.AddBidError) ? "d-none" : "")">
+                                        @ViewBag.AddBidError
+                                    </div>
+                                </div>
+                                <div class="container-fluid p-0">
+                                    <form class="d-flex w-100" method="post">
+                                        <input name="bid" type="hidden" value="@Model.BlitzPrice" />
+                                        <button class="btn btn-primary" type="submit">Купить сейчас за @Model.BlitzPrice</button>
+                                    </form>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="container-fluid col p-4 d-flex justify-content-center align-items-center">
+                                    <p>Перед тем, как сделать ставку <a class="" asp-controller="auth" asp-action="login" asp-route-returnUrl="@(Context.Request.Path+Context.Request.QueryString)">Авторизутесь</a></p>
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="row g-0 flex-nowrap">
+                <div class="col m-2">
+                    <nav class="px-1">
+                        <div class="nav nav-tabs" role="tablist">
+                            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-description" type="button" role="tab" aria-selected="true">Описание</button>
+                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-bid" type="button" role="tab" aria-selected="false">Ставки</button>
+                        </div>
+                    </nav>
+                    <div class="card border-top-0">
+                        <div class="card-body tab-content">
+                            <div class="tab-pane fade show active" id="tab-description" role="tabpanel" aria-labelledby="nav-home-tab" tabindex="0" style="min-height:70px">
+                                <p>@Model.Description</p>
+                            </div>
+                            <div class="tab-pane fade" id="tab-bid" role="tabpanel" aria-labelledby="nav-profile-tab" tabindex="0">
+                                @if (Model.Bids is List<BidVM> bids && bids.Count > 0)
+                                {
+                                    <table class="table table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th scope="col">#</th>
+                                                <th scope="col">Пользователь</th>
+                                                <th scope="col">Предложенная цена</th>
+                                                <th scope="col">Дата</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @for (int i = bids.Count() - 1; i >= 0; i--)
+                                            {
+                                                <tr>
+                                                    <th scope="row">@(i + 1)</th>
+                                                    <td>@bids[i].BidderName</td>
+                                                    <td>@bids[i].Value</td>
+                                                    <td>@bids[i].BidDate.ToString("G")</td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                }
+                                else
+                                {
+                                    <div class="d-flex w-100 justify-content-center align-items-center" style="min-height:70px">
+                                        <div>Ставки ещё не сделаны</div>
+                                    </div> 
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

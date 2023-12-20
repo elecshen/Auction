@@ -7,6 +7,14 @@
         }
     });
 
+    // Блокировка отправки пустой ставки
+    $("#bid-form").on("submit", function (event) {
+        // Проверяем, если поле ввода пустое
+        if ($("#bid").val().trim() === "") {
+            event.preventDefault();
+        }
+    });
+
     // Функция для расчёта полосы прогресса
     function updateCountdown(progress, serverTime) {
         var startTime = new Date(progress.data('start-time'));
