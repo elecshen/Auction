@@ -3,6 +3,7 @@ using Auction.Models.MSSQLModels;
 using Auction.Models.MSSQLModels.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Security.Claims;
 
 namespace Auction.Controllers
@@ -120,31 +121,57 @@ namespace Auction.Controllers
             return View(filtredLot);
         }
 
-        // GET: LotController/Details/5
-        public ActionResult Details(int id)
-        {
-            return View();
-        }
-
-        // GET: LotController/Create
+        [Authorize]
         public ActionResult Create()
         {
+            ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name");
             return View();
         }
 
-        // POST: LotController/Create
+        [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create(IFormCollection collection)
+        public async Task<IActionResult> CreateAsync(CreateLotVM lotVM)
         {
-            try
+            if (ModelState.IsValid)
             {
-                return RedirectToAction(nameof(Index));
+                if (lotVM.StartDate <= DateTime.Now)
+                    ModelState.AddModelError(nameof(lotVM.StartDate), "Начало ставок не может быть установлено задним числом");
+                if (lotVM.ExpiresOn <= DateTime.Now)
+                    ModelState.AddModelError(nameof(lotVM.ExpiresOn), "Окончание ставок не может быть установлено задним числом");
+                if (lotVM.StartDate >= lotVM.ExpiresOn)
+                    ModelState.AddModelError(nameof(lotVM.ExpiresOn), "Окончание ставок не может быть раньше даты начала");
+                if (lotVM.StartPrice <= 0)
+                    ModelState.AddModelError(nameof(lotVM.StartPrice), "Стартовая цена должна быть положительной");
+                if (lotVM.BlitzPrice <= 0)
+                    ModelState.AddModelError(nameof(lotVM.BlitzPrice), "Цена \"Купить сейчас\" должна быть положительной");
+                if (lotVM.BlitzPrice <= lotVM.StartPrice)
+                    ModelState.AddModelError(nameof(lotVM.BlitzPrice), "Цена \"Купить сейчас\" не может быть меньше стартовой");
+                if (lotVM.PriceStep < 1)
+                    ModelState.AddModelError(nameof(lotVM.PriceStep), "Шаг цены не может быть меньше 1");
+                if (lotVM.StartPrice + lotVM.PriceStep > lotVM.BlitzPrice)
+                    ModelState.AddModelError(nameof(lotVM.PriceStep), "Шаг цены слишком большой");
+                if (ModelState.IsValid)
+                {
+                    Lot lot = new()
+                    {
+                        Title = lotVM.Title,
+                        Description = lotVM.Description,
+                        StartDate = lotVM.StartDate,
+                        ExpiresOn = lotVM.ExpiresOn,
+                        BlitzPrice = lotVM.BlitzPrice,
+                        StartPrice = lotVM.StartPrice,
+                        PriceStep = lotVM.PriceStep,
+                        CategoryId = lotVM.CategoryId,
+                        OwnerId = new Guid(User.Claims.First(c => c.Type == ClaimTypes.Sid).Value),
+                    };
+                    _context.Add(lot);
+                    await _context.SaveChangesAsync();
+                    return RedirectToAction(nameof(Index), "Lot", new { pid = lot.PublicId });
+                }
             }
-            catch
-            {
-                return View();
-            }
+            ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name");
+            return View(lotVM);
         }
 
         // GET: LotController/Edit/5
