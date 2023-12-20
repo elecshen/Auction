@@ -85,6 +85,7 @@ namespace Auction.Controllers
 
         [HttpPost]
         [Authorize]
+        [ValidateAntiForgeryToken]
         public ActionResult Index(int pid, int bid)
         {
             DateTime bidDate = DateTime.Now;
