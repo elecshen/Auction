@@ -270,7 +270,7 @@ namespace Auction.Controllers
                         lot.BlitzPrice = lotVM.BlitzPrice;
 
                         _context.Update(lot);
-                        context.Entry(lot).Property(l => l.PublicId).IsModified = false;
+                        _context.Entry(lot).Property(l => l.PublicId).IsModified = false;
                         await _context.SaveChangesAsync();
                         return RedirectToAction(nameof(Index), "Lot", new { pid = lot.PublicId });
                     }
