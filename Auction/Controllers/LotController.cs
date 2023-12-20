@@ -4,6 +4,7 @@ using Auction.Models.MSSQLModels.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 namespace Auction.Controllers
@@ -174,29 +175,113 @@ namespace Auction.Controllers
             return View(lotVM);
         }
 
-        // GET: LotController/Edit/5
-        public ActionResult Edit(int id)
+        [Authorize]
+        public async Task<IActionResult> EditAsync(int pid)
         {
+            var lot = await _context.Lots.Where(l => l.PublicId == pid).FirstOrDefaultAsync();
+            if (lot is null || User.Claims.First(c => c.Type == ClaimTypes.Sid).Value != lot.OwnerId.ToString())
+            {
+                return NotFound();
+            }
+            
+            if ((lot.IsClosed && lot.StartDate > DateTime.Now) || (!lot.IsClosed && lot.ExpiresOn > DateTime.Now))
+            {
+                EditLotVM lotVM = new()
+                {
+                    Pid = pid,
+                    Title = lot.Title,
+                    Description = lot.Description,
+                    StartDate = lot.StartDate,
+                    ExpiresOn = lot.ExpiresOn,
+                    StartPrice = lot.StartPrice,
+                    BlitzPrice = lot.BlitzPrice,
+                    PriceStep = lot.PriceStep,
+                    CategoryId = lot.CategoryId,
+                };
+
+                ViewBag.IsCanEdit = true;
+                if(!lot.IsClosed)
+                    ViewBag.IsActive = true;
+                else
+                    ViewBag.IsActive = false;
+                ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", lot.CategoryId);
+                return View(lotVM);
+            }
+            ViewBag.IsCanEdit = false;
             return View();
         }
 
-        // POST: LotController/Edit/5
+        [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit(int id, IFormCollection collection)
+        public async Task<IActionResult> EditAsync(int pid, EditLotVM lotVM)
         {
-            try
+            var lot = await _context.Lots.Where(l => l.PublicId == pid).FirstOrDefaultAsync();
+            if (lot is null || pid != lotVM.Pid)
             {
-                return RedirectToAction(nameof(Index));
+                return NotFound();
             }
-            catch
+            if ((lot.IsClosed && lot.StartDate > DateTime.Now) || (!lot.IsClosed && lot.ExpiresOn > DateTime.Now))
             {
-                return View();
+                ViewBag.IsCanEdit = true;
+                if (!lot.IsClosed)
+                    ViewBag.IsActive = true;
+                else
+                    ViewBag.IsActive = false;
             }
+            else
+                ViewBag.IsActive = false;
+
+            if (ModelState.IsValid)
+            {
+                if ((bool)ViewBag.IsCanEdit)
+                {
+                    if (lot.IsClosed)
+                    {
+                        if (lotVM.StartDate <= DateTime.Now)
+                            ModelState.AddModelError(nameof(lotVM.StartDate), "Начало ставок не может быть установлено задним числом");
+                        if (lotVM.StartPrice <= 0)
+                            ModelState.AddModelError(nameof(lotVM.StartPrice), "Стартовая цена должна быть положительной");
+                        if (lotVM.PriceStep < 1)
+                            ModelState.AddModelError(nameof(lotVM.PriceStep), "Шаг цены не может быть меньше 1");
+                        if (lotVM.StartPrice + lotVM.PriceStep > lotVM.BlitzPrice)
+                            ModelState.AddModelError(nameof(lotVM.PriceStep), "Шаг цены слишком большой");
+                    }
+
+                    if (lotVM.ExpiresOn <= DateTime.Now)
+                        ModelState.AddModelError(nameof(lotVM.ExpiresOn), "Окончание ставок не может быть установлено задним числом");
+                    if (lotVM.StartDate >= lotVM.ExpiresOn)
+                        ModelState.AddModelError(nameof(lotVM.ExpiresOn), "Окончание ставок не может быть раньше даты начала");
+                    if (lotVM.BlitzPrice <= 0)
+                        ModelState.AddModelError(nameof(lotVM.BlitzPrice), "Цена \"Купить сейчас\" должна быть положительной");
+                    if (lotVM.BlitzPrice <= lotVM.StartPrice)
+                        ModelState.AddModelError(nameof(lotVM.BlitzPrice), "Цена \"Купить сейчас\" не может быть меньше стартовой");
+
+                    if (ModelState.IsValid)
+                    {
+                        if (lot.IsClosed)
+                        {
+                            lot.Description = lotVM.Description;
+                            lot.StartDate = lotVM.StartDate;
+                            lot.StartPrice = lotVM.StartPrice;
+                            lot.PriceStep = lotVM.PriceStep;
+                        }
+                        lot.ExpiresOn = lotVM.ExpiresOn;
+                        lot.BlitzPrice = lotVM.BlitzPrice;
+
+                        _context.Update(lot);
+                        context.Entry(lot).Property(l => l.PublicId).IsModified = false;
+                        await _context.SaveChangesAsync();
+                        return RedirectToAction(nameof(Index), "Lot", new { pid = lot.PublicId });
+                    }
+                }
+            }
+            ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", lotVM.CategoryId);
+            return View(lotVM);
         }
 
         // GET: LotController/Delete/5
-        public ActionResult Delete(int id)
+        public IActionResult Delete(int id)
         {
             return View();
         }
@@ -204,7 +289,7 @@ namespace Auction.Controllers
         // POST: LotController/Delete/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Delete(int id, IFormCollection collection)
+        public IActionResult Delete(int id, IFormCollection collection)
         {
             try
             {

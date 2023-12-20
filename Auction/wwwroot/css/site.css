@@ -88,6 +88,15 @@ input[type="search"]:focus {
     width: 80px;
     height: 48px;
 }
+
+input[readonly] {
+    background-color: var(--bs-secondary-bg)!important;
+}
+
+textarea[readonly] {
+    background-color: var(--bs-secondary-bg)!important;
+}
+
 /*
 .bg-primary,
 .btn-primary,

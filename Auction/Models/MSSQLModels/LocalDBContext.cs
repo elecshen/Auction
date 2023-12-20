@@ -55,7 +55,7 @@ public partial class LocalDBContext : DbContext
         {
             entity.HasKey(e => e.Id).HasName("PK__Bid__3214EC279023AA21");
 
-            entity.ToTable("Bid", tb => tb.HasTrigger("CheckLastBid"));
+            entity.ToTable("Bid");
 
             entity.HasIndex(e => e.Value, "IX_BidValue");
 
@@ -138,11 +138,14 @@ public partial class LocalDBContext : DbContext
             entity.Property(e => e.CategoryId).HasColumnName("CategoryID");
             entity.Property(e => e.Description).HasColumnType("text");
             entity.Property(e => e.ExpiresOn).HasColumnType("datetime");
+            entity.Property(e => e.IsClosed).HasDefaultValue(true);
             entity.Property(e => e.LastBidId).HasColumnName("LastBidID");
             entity.Property(e => e.OwnerId).HasColumnName("OwnerID");
             entity.Property(e => e.PublicId).ValueGeneratedOnAdd();
             entity.Property(e => e.StartDate).HasColumnType("datetime");
-            entity.Property(e => e.StatusId).HasColumnName("StatusID");
+            entity.Property(e => e.StatusId)
+                .HasDefaultValue(1)
+                .HasColumnName("StatusID");
             entity.Property(e => e.Title).HasMaxLength(128);
 
             entity.HasOne(d => d.Category).WithMany(p => p.Lots)
