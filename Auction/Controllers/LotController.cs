@@ -179,7 +179,7 @@ namespace Auction.Controllers
         public async Task<IActionResult> EditAsync(int pid)
         {
             var lot = await _context.Lots.Where(l => l.PublicId == pid).FirstOrDefaultAsync();
-            if (lot is null || User.Claims.First(c => c.Type == ClaimTypes.Sid).Value != lot.OwnerId.ToString())
+            if (lot is null || !(User.Claims.First(c => c.Type == ClaimTypes.Sid).Value == lot.OwnerId.ToString() || User.IsInRole("Admin")))
             {
                 return NotFound();
             }
@@ -217,7 +217,7 @@ namespace Auction.Controllers
         public async Task<IActionResult> EditAsync(int pid, EditLotVM lotVM)
         {
             var lot = await _context.Lots.Where(l => l.PublicId == pid).FirstOrDefaultAsync();
-            if (lot is null || pid != lotVM.Pid)
+            if (lot is null || pid != lotVM.Pid || !(User.Claims.First(c => c.Type == ClaimTypes.Sid).Value == lot.OwnerId.ToString() || User.IsInRole("Admin")))
             {
                 return NotFound();
             }
@@ -280,25 +280,20 @@ namespace Auction.Controllers
             return View(lotVM);
         }
 
-        // GET: LotController/Delete/5
-        public IActionResult Delete(int id)
-        {
-            return View();
-        }
-
-        // POST: LotController/Delete/5
+        [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Delete(int id, IFormCollection collection)
+        public async Task<IActionResult> DeleteAsync(int pid)
         {
-            try
+            var lot = await _context.Lots.Where(l => l.PublicId == pid).FirstOrDefaultAsync();
+            if (lot is null || !(User.Claims.First(c => c.Type == ClaimTypes.Sid).Value == lot.OwnerId.ToString() || User.IsInRole("Admin")))
             {
-                return RedirectToAction(nameof(Index));
+                return NotFound();
             }
-            catch
-            {
-                return View();
-            }
+
+            _context.Remove(lot);
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Index), "Home");
         }
     }
 }
