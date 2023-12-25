@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
-using System.Security.Cryptography;
 using static Auction.Models.ConstModels.CoockieEnums;
 
 namespace Auction.Controllers
@@ -16,10 +15,10 @@ namespace Auction.Controllers
         private readonly ILogger<HomeController> _logger = logger;
         private readonly LocalDBContext _context = context;
 
-        public IActionResult Index(string? search, int[] statusFilter, int[] categoryFilter)
+        public IActionResult Index(string? search, int? categoryFilter, bool? SearchAll)
         {
             // Подготавливаем запрос на выборку данных о лотах
-            IQueryable<Lot> lotsFilter = _context.Lots.AsQueryable();
+            IQueryable<Lot> lotsFilter = _context.Lots.AsNoTracking();
             // Получаем поисковую строку и фильтруем по ней
             ViewBag.Search = search;
             bool isDefault = search is null;
@@ -27,54 +26,40 @@ namespace Auction.Controllers
             {
                 lotsFilter = lotsFilter.Where(l => EF.Functions.Like(l.Title, string.Format("%{0}%", search!)));
             }
-            // Получение списка статусов и фильтрация по выбранным
-            List<Status> statuses = _context.Statuses.ToList();
-            statuses.ForEach(s =>
+            // Фильтрация по завершённости
+            if (SearchAll is null || !SearchAll.Value)
             {
-                if (!isDefault)
-                    s.IsSetByDefault = statusFilter.Contains(s.Id);
-            });
-            ViewBag.StatusFilterList = new
-            {
-                ParamName = "StatusFilter",
-                List = statuses.Select(s => new SelectListItem(s.Name, s.Id.ToString(), s.IsSetByDefault)),
-            };
-            if (!(statusFilter.Length == 0 || statusFilter.Length == statuses.Count) || isDefault)
-            {
-                var activeStatuses = statuses.Where(s => s.IsSetByDefault).Select(s => s.Id).ToArray();
-                lotsFilter = lotsFilter.Where(l => activeStatuses.Contains(l.StatusId));
+                lotsFilter = lotsFilter.Where(l => !l.IsCompleted);
+                lotsFilter = lotsFilter.Where(l => l.StartDate.AddSeconds(l.Interval) > DateTime.Now);
             }
             // Получение списка категорий и фильтрация по выбранной
             List<Category> categories = _context.Categories.ToList();
-            var categoriesSelectList = categories.Select(c => new SelectListItem(c.Name, c.Id.ToString(), categoryFilter.Contains(c.Id)));
+            categories.Insert(0, new() { Id = 0, Name = "Все" });
+            var categoriesSelectList = categories.Select(c => new SelectListItem(c.Name, c.Id.ToString(), categoryFilter == c.Id)).ToList();
             ViewBag.CategoryFilterList = new
             {
+                PublicName = "Категории",
                 ParamName = "CategoryFilter",
                 List = categoriesSelectList,
             };
-            if (!(categoryFilter.Length == 0 || categoryFilter.Length == categories.Count))
+            if (categoryFilter != 0 && categoryFilter is not null)
             {
-                var activeCategories = categories.Where(c => categoryFilter.Contains(c.Id)).Select(c => c.Id);
-                lotsFilter = lotsFilter.Where(l => activeCategories.Contains(l.CategoryId));
+                lotsFilter = lotsFilter.Where(l => categoryFilter ==  l.CategoryId);
+            }
+            else
+            {
+                categoriesSelectList[0].Selected = true;
             }
 
-            var filtredLots = lotsFilter.Select(l => new LotCardVM()
-            {
-                PublicId = l.PublicId,
-                StartPrice = l.StartPrice,
-                LastBid = l.LastBid,
-                BlitzPrice = l.BlitzPrice,
-                Title = l.Title,
-                StatusName = l.Status.Name,
-                StartDate = l.StartDate,
-                ExpiresOn = l.ExpiresOn,
-                CategoryName = l.Category.Name,
-            }).OrderBy(l => l.StartDate);
+            lotsFilter = lotsFilter.OrderBy(l => l.StartDate);
+            lotsFilter = lotsFilter.Include(l => l.LastBid)
+                .Include(l => l.Category);
+            lotsFilter = lotsFilter.Skip(0).Take(30);
+            // Исполняем запрос со всеми применёнными фильтрациями 
+            var filtredLots = lotsFilter.ToList();
 
             ViewData["Theme"] = Theme.Light;
-
-            // Исполняем запрос со всеми применёнными фильтрациями и передаём его как модель
-            return View(filtredLots.ToList());
+            return View(filtredLots.Select(l => new LotCardVM(l)).ToList());
         }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]

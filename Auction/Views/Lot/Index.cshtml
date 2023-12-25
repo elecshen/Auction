@@ -1,10 +1,11 @@
 ﻿@using Auction.Models.Lots
+@using static Auction.Models.ConstModels.LotStatus
 @model LotVM
 @{
     ViewData["Title"] = Model.Title;
 }
 
-@if (ViewBag.IsOwner || User.IsInRole("Admin"))
+@if (Model.IsOwner || User.IsInRole("Admin"))
 {
     <section class="container-fluid">
         <div class="container d-flex justify-content-end">
@@ -74,7 +75,7 @@
                         <div class="container-fluid mb-2 fs-5 p-0 d-flex flex-nowrap">
                             <div class="col-6 d-flex flex-column">
                                 <small>Текущая цена</small>
-                                <b>@(Model.LastBid is not null ? Model.LastBid.Value : Model.StartPrice)</b>
+                                <b>@Model.CurrentPrice</b>
                             </div>
                             <div class="col-6 d-flex flex-column text-end">
                                 <small>Цена выкупа</small>
@@ -84,23 +85,23 @@
                         <div class="container-fluid p-0 mb-3">
                             <div class="container-fluid p-0 d-flex justify-content-between align-items-center flex-nowrap">
                                 <div class="col">Cтатус</div>
-                                <div class="col text-end">@Model.StatusName</div>
+                                <div class="col text-end">@Model.Status</div>
                             </div>
-                            <div class="container-fluid p-0 progress" role="progressbar" data-start-time="@Model.StartDate.ToString("O")" data-end-time="@Model.ExpiresOn.ToString("O")">
+                            <div class="container-fluid p-0 progress" role="progressbar" data-start-time="@Model.StartDate.ToString("O")" data-end-time="@Model.ExpireDate.ToString("O")" data-closed="@(Model.Status != InProgress)">
                                 <div class="progress-bar"></div>
                             </div>
                             <div class="container-fluid p-0 d-flex justify-content-between align-items-center flex-nowrap" style="font-size: 0.7rem">
                                 <div class="col">@Model.StartDate.ToString("g")</div>
-                                <div class="col text-end">@Model.ExpiresOn.ToString("g")</div>
+                                <div class="col text-end">@Model.ExpireDate.ToString("g")</div>
                             </div>
                         </div>
-                        @if(!Model.IsClosed && !ViewBag.IsOwner)
+                        @if (Model.IsCanBid)
                         {
-                            if (User.Identity is not null && User.Identity.IsAuthenticated)
+                            if (Model.IsAuthenticated)
                             {
                                 <div class="container-fluid p-0 mb-3">
                                     <form class="d-flex" id="bid-form" method="post">
-                                        <input name="bid" min="@(Model.LastBid is not null ? Model.LastBid.Value + Model.PriceStep : Model.StartPrice)" step="@Model.PriceStep" max="@Model.BlitzPrice" id="bid" type="number" class="form-control me-5 @(string.IsNullOrEmpty(ViewBag.AddBidError) ? "" : "border-danger")" placeholder="Укажите ставку" />
+                                        <input name="bid" min="@Model.NextMinPrice" max="@Model.BlitzPrice" id="bid" type="number" class="form-control me-5 @(string.IsNullOrEmpty(ViewBag.AddBidError) ? "" : "border-danger")" placeholder="Укажите ставку" />
                                         <button class="btn btn-primary text-nowrap" type="submit">Сделать ставку</button>
                                     </form>
                                     <div class="text-danger @(string.IsNullOrEmpty(ViewBag.AddBidError) ? "d-none" : "")">
@@ -135,7 +136,16 @@
                     <div class="card border-top-0">
                         <div class="card-body tab-content">
                             <div class="tab-pane fade show active" id="tab-description" role="tabpanel" aria-labelledby="nav-home-tab" tabindex="0" style="min-height:70px">
-                                <p>@Model.Description</p>
+                                @if (Model.Description is not null)
+                                {
+                                    <p>@Model.Description</p>
+                                }
+                                else
+                                {
+                                    <div class="d-flex w-100 justify-content-center align-items-center" style="min-height:70px">
+                                        <div>Описание отсутствует</div>
+                                    </div>
+                                }
                             </div>
                             <div class="tab-pane fade" id="tab-bid" role="tabpanel" aria-labelledby="nav-profile-tab" tabindex="0">
                                 @if (Model.Bids is List<BidVM> bids && bids.Count > 0)

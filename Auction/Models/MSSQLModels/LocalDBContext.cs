@@ -28,8 +28,6 @@ public partial class LocalDBContext : DbContext
 
     public virtual DbSet<Role> Roles { get; set; }
 
-    public virtual DbSet<Status> Statuses { get; set; }
-
     public virtual DbSet<User> Users { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -130,22 +128,16 @@ public partial class LocalDBContext : DbContext
 
             entity.HasIndex(e => e.OwnerId, "IX_LotOwner");
 
-            entity.HasIndex(e => e.StatusId, "IX_LotStatus");
-
             entity.Property(e => e.Id)
                 .HasDefaultValueSql("(newid())")
                 .HasColumnName("ID");
             entity.Property(e => e.CategoryId).HasColumnName("CategoryID");
             entity.Property(e => e.Description).HasColumnType("text");
-            entity.Property(e => e.ExpiresOn).HasColumnType("datetime");
-            entity.Property(e => e.IsClosed).HasDefaultValue(true);
+            entity.Property(e => e.IsCompleted).HasDefaultValue(false);
             entity.Property(e => e.LastBidId).HasColumnName("LastBidID");
             entity.Property(e => e.OwnerId).HasColumnName("OwnerID");
             entity.Property(e => e.PublicId).ValueGeneratedOnAdd();
             entity.Property(e => e.StartDate).HasColumnType("datetime");
-            entity.Property(e => e.StatusId)
-                .HasDefaultValue(1)
-                .HasColumnName("StatusID");
             entity.Property(e => e.Title).HasMaxLength(128);
 
             entity.HasOne(d => d.Category).WithMany(p => p.Lots)
@@ -161,11 +153,6 @@ public partial class LocalDBContext : DbContext
                 .HasForeignKey(d => d.OwnerId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_LotOwner");
-
-            entity.HasOne(d => d.Status).WithMany(p => p.Lots)
-                .HasForeignKey(d => d.StatusId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_LotStatus");
         });
 
         modelBuilder.Entity<Role>(entity =>
@@ -175,18 +162,6 @@ public partial class LocalDBContext : DbContext
             entity.Property(e => e.Id)
                 .ValueGeneratedNever()
                 .HasColumnName("ID");
-            entity.Property(e => e.Name)
-                .HasMaxLength(50)
-                .IsUnicode(false);
-        });
-
-        modelBuilder.Entity<Status>(entity =>
-        {
-            entity.HasKey(e => e.Id).HasName("PK__Status__3214EC2739B6A836");
-
-            entity.ToTable("Status");
-
-            entity.Property(e => e.Id).HasColumnName("ID");
             entity.Property(e => e.Name)
                 .HasMaxLength(50)
                 .IsUnicode(false);

@@ -1,4 +1,9 @@
 ﻿$(function () {
+
+    $(".input-validation-error").each(function () {
+        $(this).removeClass('input-validation-error').addClass("is-invalid");
+    });
+
     // Блокировка отправки пустого поиска
     $("#search-form").on("submit", function (event) {
         // Проверяем, если поле ввода пустое
@@ -17,17 +22,15 @@
 
     // Функция для расчёта полосы прогресса
     function updateCountdown(progress, serverTime) {
-        var startTime = new Date(progress.data('start-time'));
-        var endTime = new Date(progress.data('end-time'));
-        var now = new Date(serverTime);
-        var progressBar = progress.find('.progress-bar');
-        if (now < startTime) {
-            progressBar.width('100%');
-            progressBar.addClass('progress-bar-striped').addClass('progress-bar-animated');
-        } else if (now < endTime) {
-            var fillvalue = (now - startTime) / (endTime - startTime) * 100;
+        let isClosed = progress.data('closed'); 
+        let startTime = new Date(progress.data('start-time'));
+        let endTime = new Date(progress.data('end-time'));
+        let now = new Date(serverTime);
+        let progressBar = progress.find('.progress-bar');
+        if (now < endTime && isClosed === 'False') {
+            let fillvalue = (now - startTime) / (endTime - startTime) * 100;
             progressBar.width(fillvalue + '%');
-            progressBar.removeClass('progress-bar-striped').removeClass('progress-bar-animated').addClass('bg-success');
+            progressBar.addClass('progress-bar-striped').addClass('progress-bar-animated').addClass('bg-success');
         } else {
             progressBar.width('100%');
             progressBar.removeClass('bg-success').addClass('bg-danger');

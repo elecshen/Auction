@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace Auction.Models.MSSQLModels.Entities;
+﻿namespace Auction.Models.MSSQLModels.Entities;
 
 public partial class Lot
 {
@@ -15,23 +12,19 @@ public partial class Lot
 
     public DateTime StartDate { get; set; }
 
-    public DateTime ExpiresOn { get; set; }
+    public int Interval { get; set; }
 
     public int BlitzPrice { get; set; }
 
     public int StartPrice { get; set; }
 
-    public int PriceStep { get; set; }
-
     public Guid? LastBidId { get; set; }
 
     public Guid OwnerId { get; set; }
 
-    public int StatusId { get; set; }
-
-    public bool IsClosed { get; set; }
-
     public int CategoryId { get; set; }
+
+    public bool IsCompleted { get; set; }
 
     public virtual ICollection<Bid> Bids { get; set; } = new List<Bid>();
 
@@ -42,6 +35,4 @@ public partial class Lot
     public virtual Bid? LastBid { get; set; }
 
     public virtual User Owner { get; set; } = null!;
-
-    public virtual Status Status { get; set; } = null!;
 }

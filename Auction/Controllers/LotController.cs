@@ -1,4 +1,5 @@
-﻿using Auction.Models.Lots;
+﻿using Auction.Models.ConstModels;
+using Auction.Models.Lots;
 using Auction.Models.MSSQLModels;
 using Auction.Models.MSSQLModels.Entities;
 using Microsoft.AspNetCore.Authorization;
@@ -13,117 +14,141 @@ namespace Auction.Controllers
     {
         private readonly LocalDBContext _context = context;
 
-        private Lot? CheckLotRequest(int pid, out Guid? userId, out bool isAllowBid)
-        {// Проверка существования лота и установка вспомогательных значений для представления
-            userId = null;
-            isAllowBid = false;
-            Lot? lot = _context.Lots.Where(l => l.PublicId == pid).FirstOrDefault();
-            if (lot is null)
-            {
-                return null;
-            }
-            ViewBag.IsOwner = false;
+        private Lot? GetLot(int pid)
+            => _context.Lots
+                .Where(l => l.PublicId == pid)
+                .Include(l => l.Bids)
+                    .ThenInclude(b => b.Bidder)
+                .Include(l => l.Category)
+                .FirstOrDefault();
+
+        private Guid? GetUserId()
+        {
             var sid = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Sid);
             if (User.Identity is not null && User.Identity.IsAuthenticated && sid is not null)
             {
-                userId = new(sid.Value);
-                if (userId == lot.OwnerId)
-                    ViewBag.IsOwner = true;
-                else
-                    isAllowBid = true;
+                return new(sid.Value);
             }
-            return lot;
+            return null;
         }
 
-        private LotVM GetLotVM(int pid)
+        private LotVM MakeLotVM(Lot lot, Guid? userId)
         {
-            IQueryable<Lot> lotsFilter = _context.Lots.AsQueryable();
-            lotsFilter = lotsFilter.Where(l => l.PublicId == pid);
-            LotVM filtredLot = lotsFilter.Select(l => new LotVM()
+            LotVM lotVM = new()
             {
-                PublicId = l.PublicId,
-                CategoryName = l.Category.Name,
-                Title = l.Title,
-                StartPrice = l.StartPrice,
-                LastBid = l.LastBid,
-                PriceStep = l.PriceStep,
-                BlitzPrice = l.BlitzPrice,
-                StatusName = l.Status.Name,
-                IsClosed = l.IsClosed,
-                StartDate = l.StartDate,
-                ExpiresOn = l.ExpiresOn,
-                Description = l.Description,
-                Bids = l.Bids.Select(b => new BidVM()
+                PublicId = lot.PublicId,
+                CategoryName = lot.Category.Name,
+                Title = lot.Title,
+                Description = lot.Description,
+                StartDate = lot.StartDate,
+                ExpireDate = lot.StartDate.AddSeconds(lot.Interval),
+                BlitzPrice = lot.BlitzPrice,
+                IsAuthenticated = userId is not null,
+                IsOwner = lot.OwnerId == userId,
+                Bids = lot.Bids.Select(b => new BidVM()
                 {
                     BidderName = b.Bidder.Username,
                     Value = b.Value,
                     BidDate = b.BidDate,
                 }).OrderBy(b => b.BidDate).ToList(),
-            }).First();
-            return filtredLot;
+            };
+            CalcLotBidProperties(lot, lotVM);
+            return lotVM;
         }
 
-        [HttpGet]
-        public ActionResult Index(int pid)
+        private void CalcLotBidProperties(Lot lot, LotVM lotVM)
         {
-            Lot? lot = CheckLotRequest(pid, out Guid? userId, out bool isAllowBid);
+            lotVM.IsCanBid = false;
+            if (DateTime.Now < lotVM.ExpireDate && !lot.IsCompleted)
+            {
+                if (!lotVM.IsOwner)
+                    lotVM.IsCanBid = true;
+                lotVM.Status = LotStatus.InProgress;
+            }
+            else
+                lotVM.Status = LotStatus.Completed;
+            if (lot.LastBid is not null)
+            {
+                lotVM.CurrentPrice = lot.LastBid.Value;
+                lotVM.NextMinPrice = lot.LastBid.Value + 1;
+            }
+            else
+            {
+                lotVM.CurrentPrice = lot.StartPrice;
+                lotVM.NextMinPrice = lot.StartPrice;
+            }
+        }
+
+        private IActionResult MakeIndexView(int pid, int? bid)
+        {
+            Lot? lot = GetLot(pid);
             if (lot is null)
             {
                 return NotFound();
             }
-            LotVM filtredLot = GetLotVM(pid);
-            return View(filtredLot);
+            Guid? userId = GetUserId();
+            LotVM lotVM = MakeLotVM(lot, userId);
+            if (bid is null)
+                return View(lotVM);
+
+            // Проверка коректности ставки и её фиксация
+            if (lotVM.IsCanBid && !(bid < lotVM.NextMinPrice || bid > lot.BlitzPrice))
+            {
+                Bid newBid = new()
+                {
+                    Value = bid.Value,
+                    BidDate = DateTime.Now,
+                    BidderId = userId!.Value,
+                    LotId = lot.Id,
+                };
+
+                using var transaction = _context.Database.BeginTransaction();
+                _context.Bids.Add(newBid);
+                lot.LastBid = newBid;
+                if (lot.BlitzPrice == bid)
+                    lot.IsCompleted = true; // Статус: Завершён
+
+                try
+                {
+                    _context.SaveChanges();
+                    transaction.Commit();
+                }
+                catch (Exception ex)
+                {
+                    transaction.Rollback();
+                }
+
+                lotVM.Bids.Add(new BidVM()
+                {
+                    BidderName = User.Claims.First(c => c.Type == ClaimTypes.Name).Value,
+                    Value = newBid.Value,
+                    BidDate = newBid.BidDate,
+                });
+                CalcLotBidProperties(lot, lotVM);
+
+                ViewBag.AddBidError = "";
+            }
+            ViewBag.AddBidError ??= "Не удалось сделать ставку";
+
+            return View(lotVM);
         }
 
-        private string? IsBidCorrect(Lot lot, DateTime bidDate, int bid)
+        [HttpGet]
+        public IActionResult Index(int pid)
         {
-            if (lot.StartDate >= bidDate || bidDate >= lot.ExpiresOn)
-                return "Время вышло";
-            int currentPrice = lot.LastBid is not null ? lot.LastBid.Value + lot.PriceStep : lot.StartPrice;
-            if (bid >= currentPrice && bid <= lot.BlitzPrice && (bid - lot.StartPrice) % lot.PriceStep == 0)
-                return null;
-            return "Неверное значение ставки";
+            return MakeIndexView(pid, null);
         }
 
         [HttpPost]
         [Authorize]
         [ValidateAntiForgeryToken]
-        public ActionResult Index(int pid, int bid)
+        public IActionResult Index(int pid, int bid)
         {
-            DateTime bidDate = DateTime.Now;
-
-            Lot? lot = CheckLotRequest(pid, out Guid? userId, out bool isAllowBid);
-            if (lot is null)
-            {
-                return NotFound();
-            }
-
-            // Проверка коректности ставки и её фиксация
-            ViewBag.AddBidError = IsBidCorrect(lot, bidDate, bid);
-            if (isAllowBid && !lot.IsClosed && ViewBag.AddBidError is null)
-            {
-                Bid newBid = new()
-                {
-                    Value = bid,
-                    BidDate = bidDate,
-                    BidderId = userId!.Value,
-                    LotId = lot.Id,
-                };
-                _context.Bids.Add(newBid);
-                lot.LastBid = newBid;
-                _context.SaveChanges();
-                // CheckstatusService
-                ViewBag.AddBidError = "";
-            }
-            ViewBag.AddBidError ??= "Не удалось сделать ставку";
-
-
-            LotVM filtredLot = GetLotVM(pid);
-            return View(filtredLot);
+            return MakeIndexView(pid, bid);
         }
 
         [Authorize]
-        public ActionResult Create()
+        public IActionResult Create()
         {
             ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name");
             return View();
@@ -136,35 +161,20 @@ namespace Auction.Controllers
         {
             if (ModelState.IsValid)
             {
-                if (lotVM.StartDate <= DateTime.Now)
-                    ModelState.AddModelError(nameof(lotVM.StartDate), "Начало ставок не может быть установлено задним числом");
-                if (lotVM.ExpiresOn <= DateTime.Now)
-                    ModelState.AddModelError(nameof(lotVM.ExpiresOn), "Окончание ставок не может быть установлено задним числом");
-                if (lotVM.StartDate >= lotVM.ExpiresOn)
-                    ModelState.AddModelError(nameof(lotVM.ExpiresOn), "Окончание ставок не может быть раньше даты начала");
-                if (lotVM.StartPrice <= 0)
-                    ModelState.AddModelError(nameof(lotVM.StartPrice), "Стартовая цена должна быть положительной");
-                if (lotVM.BlitzPrice <= 0)
-                    ModelState.AddModelError(nameof(lotVM.BlitzPrice), "Цена \"Купить сейчас\" должна быть положительной");
                 if (lotVM.BlitzPrice <= lotVM.StartPrice)
-                    ModelState.AddModelError(nameof(lotVM.BlitzPrice), "Цена \"Купить сейчас\" не может быть меньше стартовой");
-                if (lotVM.PriceStep < 1)
-                    ModelState.AddModelError(nameof(lotVM.PriceStep), "Шаг цены не может быть меньше 1");
-                if (lotVM.StartPrice + lotVM.PriceStep > lotVM.BlitzPrice)
-                    ModelState.AddModelError(nameof(lotVM.PriceStep), "Шаг цены слишком большой");
+                    ModelState.AddModelError(nameof(lotVM.BlitzPrice), "Цена \"Купить сейчас\" должна быть больше стартовой");
                 if (ModelState.IsValid)
                 {
                     Lot lot = new()
                     {
                         Title = lotVM.Title,
                         Description = lotVM.Description,
-                        StartDate = lotVM.StartDate,
-                        ExpiresOn = lotVM.ExpiresOn,
+                        StartDate = DateTime.Now,
+                        Interval = (int)new TimeSpan(lotVM.Days, lotVM.Hours, lotVM.Minutes, lotVM.Seconds).TotalSeconds,
                         BlitzPrice = lotVM.BlitzPrice,
                         StartPrice = lotVM.StartPrice,
-                        PriceStep = lotVM.PriceStep,
-                        CategoryId = lotVM.CategoryId,
                         OwnerId = new Guid(User.Claims.First(c => c.Type == ClaimTypes.Sid).Value),
+                        CategoryId = lotVM.CategoryId,
                     };
                     _context.Add(lot);
                     await _context.SaveChangesAsync();
@@ -176,38 +186,43 @@ namespace Auction.Controllers
         }
 
         [Authorize]
-        public async Task<IActionResult> EditAsync(int pid)
+        public IActionResult Edit(int pid)
         {
-            var lot = await _context.Lots.Where(l => l.PublicId == pid).FirstOrDefaultAsync();
-            if (lot is null || !(User.Claims.First(c => c.Type == ClaimTypes.Sid).Value == lot.OwnerId.ToString() || User.IsInRole("Admin")))
+            Guid userId = new(User.Claims.First(c => c.Type == ClaimTypes.Sid).Value);
+
+            var query = _context.Lots.Where(l => l.PublicId == pid);
+            if (!User.IsInRole("Admin")) // Редактировать может либо администратор
+                query.Where(l => l.OwnerId == userId); // Либо владелец
+            var lot = query.FirstOrDefault();
+            if (lot is null)
             {
                 return NotFound();
             }
-            
-            if ((lot.IsClosed && lot.StartDate > DateTime.Now) || (!lot.IsClosed && lot.ExpiresOn > DateTime.Now))
+
+            TimeSpan interval = TimeSpan.FromSeconds(lot.Interval);
+
+            ViewBag.IsCanEdit = DateTime.Now < lot.StartDate + interval && !lot.IsCompleted;
+            if (ViewBag.IsCanEdit)
             {
                 EditLotVM lotVM = new()
                 {
                     Pid = pid,
+                    CategoryId = lot.CategoryId,
                     Title = lot.Title,
                     Description = lot.Description,
                     StartDate = lot.StartDate,
-                    ExpiresOn = lot.ExpiresOn,
+                    Days = interval.Days,
+                    Hours = interval.Hours,
+                    Minutes = interval.Minutes,
+                    Seconds = interval.Seconds,
                     StartPrice = lot.StartPrice,
                     BlitzPrice = lot.BlitzPrice,
-                    PriceStep = lot.PriceStep,
-                    CategoryId = lot.CategoryId,
                 };
 
-                ViewBag.IsCanEdit = true;
-                if(!lot.IsClosed)
-                    ViewBag.IsActive = true;
-                else
-                    ViewBag.IsActive = false;
+                ViewBag.IsActive = !lot.IsCompleted;
                 ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", lot.CategoryId);
                 return View(lotVM);
             }
-            ViewBag.IsCanEdit = false;
             return View();
         }
 
@@ -216,57 +231,41 @@ namespace Auction.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditAsync(int pid, EditLotVM lotVM)
         {
-            var lot = await _context.Lots.Where(l => l.PublicId == pid).FirstOrDefaultAsync();
-            if (lot is null || pid != lotVM.Pid || !(User.Claims.First(c => c.Type == ClaimTypes.Sid).Value == lot.OwnerId.ToString() || User.IsInRole("Admin")))
+            Guid userId = new(User.Claims.First(c => c.Type == ClaimTypes.Sid).Value);
+
+            var query = _context.Lots.Where(l => l.PublicId == pid);
+            if (!User.IsInRole("Admin")) // Редактировать может либо администратор
+                query.Where(l => l.OwnerId == userId); // Либо владелец
+            var lot = query.FirstOrDefault();
+            if (lot is null)
             {
                 return NotFound();
             }
-            if ((lot.IsClosed && lot.StartDate > DateTime.Now) || (!lot.IsClosed && lot.ExpiresOn > DateTime.Now))
-            {
-                ViewBag.IsCanEdit = true;
-                if (!lot.IsClosed)
-                    ViewBag.IsActive = true;
-                else
-                    ViewBag.IsActive = false;
-            }
-            else
-                ViewBag.IsActive = false;
 
-            if (ModelState.IsValid)
+            TimeSpan interval = TimeSpan.FromSeconds(lot.Interval);
+            TimeSpan newInterval = new(lotVM.Days, lotVM.Hours, lotVM.Minutes, lotVM.Seconds);
+
+            ViewBag.IsCanEdit = DateTime.Now < lot.StartDate + interval && !lot.IsCompleted;
+            ViewBag.IsActive = !lot.IsCompleted;
+
+            if (ViewBag.IsCanEdit)
             {
-                if ((bool)ViewBag.IsCanEdit)
+                if (ModelState.IsValid)
                 {
-                    if (lot.IsClosed)
-                    {
-                        if (lotVM.StartDate <= DateTime.Now)
-                            ModelState.AddModelError(nameof(lotVM.StartDate), "Начало ставок не может быть установлено задним числом");
-                        if (lotVM.StartPrice <= 0)
-                            ModelState.AddModelError(nameof(lotVM.StartPrice), "Стартовая цена должна быть положительной");
-                        if (lotVM.PriceStep < 1)
-                            ModelState.AddModelError(nameof(lotVM.PriceStep), "Шаг цены не может быть меньше 1");
-                        if (lotVM.StartPrice + lotVM.PriceStep > lotVM.BlitzPrice)
-                            ModelState.AddModelError(nameof(lotVM.PriceStep), "Шаг цены слишком большой");
-                    }
-
-                    if (lotVM.ExpiresOn <= DateTime.Now)
-                        ModelState.AddModelError(nameof(lotVM.ExpiresOn), "Окончание ставок не может быть установлено задним числом");
-                    if (lotVM.StartDate >= lotVM.ExpiresOn)
-                        ModelState.AddModelError(nameof(lotVM.ExpiresOn), "Окончание ставок не может быть раньше даты начала");
-                    if (lotVM.BlitzPrice <= 0)
-                        ModelState.AddModelError(nameof(lotVM.BlitzPrice), "Цена \"Купить сейчас\" должна быть положительной");
+                    if (newInterval < interval)
+                        ModelState.AddModelError(nameof(lotVM.Days), "Продолжительность торгов не может быть уменьшена");
+                    if (lotVM.BlitzPrice < lot.BlitzPrice)
+                        ModelState.AddModelError(nameof(lotVM.BlitzPrice), "Цена \"Купить сейчас\" не может быть уменьшена");
                     if (lotVM.BlitzPrice <= lotVM.StartPrice)
-                        ModelState.AddModelError(nameof(lotVM.BlitzPrice), "Цена \"Купить сейчас\" не может быть меньше стартовой");
+                        ModelState.AddModelError(nameof(lotVM.BlitzPrice), "Цена \"Купить сейчас\" должна быть больше стартовой");
 
                     if (ModelState.IsValid)
                     {
-                        if (lot.IsClosed)
+                        if (ViewBag.IsActive)
                         {
                             lot.Description = lotVM.Description;
-                            lot.StartDate = lotVM.StartDate;
-                            lot.StartPrice = lotVM.StartPrice;
-                            lot.PriceStep = lotVM.PriceStep;
                         }
-                        lot.ExpiresOn = lotVM.ExpiresOn;
+                        lot.Interval = (int)newInterval.TotalSeconds;
                         lot.BlitzPrice = lotVM.BlitzPrice;
 
                         _context.Update(lot);
@@ -275,8 +274,8 @@ namespace Auction.Controllers
                         return RedirectToAction(nameof(Index), "Lot", new { pid = lot.PublicId });
                     }
                 }
+                ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", lot.CategoryId);
             }
-            ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", lotVM.CategoryId);
             return View(lotVM);
         }
 
@@ -285,8 +284,13 @@ namespace Auction.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteAsync(int pid)
         {
-            var lot = await _context.Lots.Where(l => l.PublicId == pid).FirstOrDefaultAsync();
-            if (lot is null || !(User.Claims.First(c => c.Type == ClaimTypes.Sid).Value == lot.OwnerId.ToString() || User.IsInRole("Admin")))
+            Guid userId = new(User.Claims.First(c => c.Type == ClaimTypes.Sid).Value);
+
+            var query = _context.Lots.Where(l => l.PublicId == pid);
+            if (!User.IsInRole("Admin")) // Удалять может либо администратор
+                query.Where(l => l.OwnerId == userId); // Либо владелец
+            var lot = query.FirstOrDefault();
+            if (lot is null)
             {
                 return NotFound();
             }

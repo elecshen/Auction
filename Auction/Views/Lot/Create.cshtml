@@ -6,47 +6,57 @@
 <section class="container-fluid mb-3">
     <div class="container m-auto">
         <div class="row">
-            <div class="col-md-4">
+            <div class="col-md-6">
                 <form method="post">
-                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-                    <div class="form-group">
-                        <label asp-for="CategoryId" class="control-label"></label>
-                        <select asp-for="CategoryId" class="form-control" asp-items="ViewBag.CategoryId"></select>
+                    <div class="form-group mb-3">
+                        <label asp-for="CategoryId" class="form-label"></label>
+                        <select asp-for="CategoryId" class="form-select" asp-items="ViewBag.CategoryId">
+                            <option hidden selected disabled>Выберите категорию...</option>
+                        </select>
+                        <span asp-validation-for="CategoryId" class="invalid-feedback"></span>
                     </div>
-                    <div class="form-group">
-                        <label asp-for="Title" class="control-label"></label>
+                    <div class="form-group mb-3">
+                        <label asp-for="Title" class="form-label"></label>
                         <input asp-for="Title" class="form-control" />
-                        <span asp-validation-for="Title" class="text-danger"></span>
+                        <span asp-validation-for="Title" class="invalid-feedback"></span>
                     </div>
-                    <div class="form-group">
-                        <label asp-for="Description" class="control-label"></label>
+                    <div class="form-group mb-3">
+                        <label asp-for="Description" class="form-label"></label>
                         <textarea asp-for="Description" class="form-control"></textarea>
-                        <span asp-validation-for="Description" class="text-danger"></span>
                     </div>
-                    <div class="form-group">
-                        <label asp-for="StartDate" class="control-label"></label>
-                        <input asp-for="StartDate" class="form-control" />
-                        <span asp-validation-for="StartDate" class="text-danger"></span>
+                    <div class="form-group mb-3">
+                        <label for="startMoment" class="form-label">Дата начала торгов</label>
+                        <input type="text" class="form-control" id="startMoment" value="Момент отправки" readonly>
                     </div>
-                    <div class="form-group">
-                        <label asp-for="ExpiresOn" class="control-label"></label>
-                        <input asp-for="ExpiresOn" class="form-control" />
-                        <span asp-validation-for="ExpiresOn" class="text-danger"></span>
+                    <div class="mb-3">
+                        <label for="Days" class="form-label">Продолжительность торгов</label>
+                        <div class="input-group has-validation">
+                            <input asp-for="Days" class="form-control" />
+                            <span class="input-group-text">д.</span>
+                            <input asp-for="Hours" class="form-control" />
+                            <span class="input-group-text">ч.</span>
+                            <input asp-for="Minutes" class="form-control" />
+                            <span class="input-group-text">мин.</span>
+                            <input asp-for="Seconds" class="form-control" />
+                            <span class="input-group-text">сек.</span>
+                            <div class="invalid-feedback">
+                                Некорректные значения интервала времени.
+                            </div>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label asp-for="BlitzPrice" class="control-label"></label>
-                        <input asp-for="BlitzPrice" class="form-control" />
-                        <span asp-validation-for="BlitzPrice" class="text-danger"></span>
+                    <div class="form-group mb-3">
+                        <label for="expireMoment" class="form-label">Дата окончания торгов</label>
+                        <input type="text" class="form-control" id="expireMoment" value="Недостаточно данных" readonly>
                     </div>
-                    <div class="form-group">
-                        <label asp-for="StartPrice" class="control-label"></label>
+                    <div class="form-group mb-3">
+                        <label asp-for="StartPrice" class="form-label"></label>
                         <input asp-for="StartPrice" class="form-control" />
-                        <span asp-validation-for="StartPrice" class="text-danger"></span>
+                        <span asp-validation-for="StartPrice" class="invalid-feedback"></span>
                     </div>
-                    <div class="form-group">
-                        <label asp-for="PriceStep" class="control-label"></label>
-                        <input asp-for="PriceStep" class="form-control" />
-                        <span asp-validation-for="PriceStep" class="text-danger"></span>
+                    <div class="form-group mb-3">
+                        <label asp-for="BlitzPrice" class="form-label"></label>
+                        <input asp-for="BlitzPrice" class="form-control" />
+                        <span asp-validation-for="BlitzPrice" class="invalid-feedback"></span>
                     </div>
                     <div class="form-group my-1">
                         <input type="submit" value="Создать" class="btn btn-primary" />

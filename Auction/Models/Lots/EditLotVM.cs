@@ -4,6 +4,7 @@ namespace Auction.Models.Lots
 {
     public class EditLotVM
     {
+        [Required]
         public int Pid { get; set; }
 
         [Display(Name = "Категория")]
@@ -16,29 +17,29 @@ namespace Auction.Models.Lots
         [DataType(DataType.Text)]
         public string? Description { get; set; }
 
-        [Required(ErrorMessage = "Поле \"{0}\" должно быть заполнено.")]
-        [Display(Name = "Дата начала ставок")]
+        [Display(Name = "Дата начала торгов")]
         [DataType(DataType.DateTime)]
         public DateTime StartDate { get; set; }
 
-        [Required(ErrorMessage = "Поле \"{0}\" должно быть заполнено.")]
-        [Display(Name = "Дата окончания ставок")]
-        [DataType(DataType.DateTime)]
-        public DateTime ExpiresOn { get; set; }
+        [Required]
+        [Range(0, 30)]
+        public int Days { get; set; } = 0;
+        [Required]
+        [Range(0, 23)]
+        public int Hours { get; set; } = 1;
+        [Required]
+        [Range(0, 59)]
+        public int Minutes { get; set; } = 0;
+        [Required]
+        [Range(0, 59)]
+        public int Seconds { get; set; } = 0;
 
-        [Required(ErrorMessage = "Поле \"{0}\" должно быть заполнено.")]
-        [Display(Name = "Цена \"Купить сейчас\"")]
-        [DataType(DataType.Currency)]
-        public int BlitzPrice { get; set; }
-
-        [Required(ErrorMessage = "Поле \"{0}\" должно быть заполнено.")]
         [Display(Name = "Стартовая цена")]
-        [DataType(DataType.Currency)]
         public int StartPrice { get; set; }
 
         [Required(ErrorMessage = "Поле \"{0}\" должно быть заполнено.")]
-        [Display(Name = "Шаг цены")]
-        [DataType(DataType.Currency)]
-        public int PriceStep { get; set; }
+        [Display(Name = "Цена \"Купить сейчас\"")]
+        [Range(1, int.MaxValue, ErrorMessage = "Цена \"Купить сейчас\" должна быть положительной")]
+        public int BlitzPrice { get; set; }
     }
 }

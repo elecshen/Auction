@@ -84,7 +84,7 @@ namespace Auction.Controllers
             };
             if(RememberMe)
             {
-                properties.ExpiresUtc = DateTime.UtcNow.AddMinutes(1);
+                properties.ExpiresUtc = DateTime.UtcNow.AddDays(30);
             }
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(id), properties);
         }
